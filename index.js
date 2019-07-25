@@ -71,6 +71,7 @@ ground_right.position.set(1.5, 0.1, 0)
 scene.add(ground_right)
 customizeShadow(ground_right, 0.25) // mess, opacity
 
+
 // 樹物件
 var tree = function(x, z) {
     this.x = x
