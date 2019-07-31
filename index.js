@@ -1,6 +1,8 @@
-let stats, pointLight
-let rotateAngle = 0
-let position_x = 0,
+var stats, pointLight
+var drops = []
+var count = 0
+var rotateAngle = 0
+var position_x = 0,
     position_y = 3,
     position_z = 0
 //Create color palette
@@ -36,6 +38,24 @@ camera.position.set(-5, 6, 8)
 // camera.position.y=4;
 camera.lookAt(new THREE.Vector3(0, 0, 0))
 
+// 三軸座標輔助
+let axes = new THREE.AxesHelper(20)
+scene.add(axes)
+
+// 建立 OrbitControls
+cameraControl = new THREE.OrbitControls(camera, renderer.domElement)
+cameraControl.enableDamping = true // 啟用阻尼效果,滑鼠拖曳靈敏度
+// 是否可縮放
+// cameraControl.enableZoom = true
+// 設計相機距離原點最近距離
+// cameraControl.minDistance = 3
+// 設計相機距離原點最遠距離
+cameraControl.maxDistance = 100
+// 開啟右鍵拖移
+cameraControl.enablePan = true
+cameraControl.dampingFactor = 0.25 // 阻尼系數
+// cameraControl.autoRotate = true // 啟用自動旋轉
+
 // 設置環境光提供輔助柔和白光
 var light = new THREE.AmbientLight(0xffffff, 0.5)
 scene.add(light)
@@ -66,49 +86,92 @@ function pointLightAnimation() {
     // 點光源位置與sun同步
     pointLight.position.copy(sun_mesh.position)
 }
+function ground() {
+    // grassland left
+    var geometry_left = new THREE.BoxGeometry(4.25, 0.2, 2)
+    var material_grass = new THREE.MeshLambertMaterial({ color: Colors.greenLight })
+    var ground_left = new THREE.Mesh(geometry_left, material_grass)
+    ground_left.position.set(position_x + -2.125, position_y + 0.1, position_z + -6)
+    ground_left.receiveShadow = true
+    scene.add(ground_left)
+    customizeShadow(ground_left, 0.25) // mess, opacity
 
-// grassland left
-var geometry_left = new THREE.BoxGeometry(4.25, 0.2, 2)
-var material_grass = new THREE.MeshLambertMaterial({ color: Colors.greenLight })
-var ground_left = new THREE.Mesh(geometry_left, material_grass)
-ground_left.position.set(position_x + -2.125, position_y + 0.1, position_z + -6)
-ground_left.receiveShadow = true
-scene.add(ground_left)
-customizeShadow(ground_left, 0.25) // mess, opacity
+    //river
+    var geometry_river = new THREE.BoxGeometry(1, 0.1, 2)
+    var material_river = new THREE.MeshLambertMaterial({ color: Colors.blue })
+    var river = new THREE.Mesh(geometry_river, material_river)
+    river.position.set(position_x + 0.5, position_y + 0.1, position_z + -6)
+    river.receiveShadow = true
+    scene.add(river)
+    customizeShadow(river, 0.08) // mess, opacity
 
-//river
-var geometry_river = new THREE.BoxGeometry(1, 0.1, 2)
-var material_river = new THREE.MeshLambertMaterial({ color: Colors.blue })
-var river = new THREE.Mesh(geometry_river, material_river)
-river.position.set(position_x + 0.5, position_y + 0.1, position_z + -6)
-river.receiveShadow = true
-scene.add(river)
-customizeShadow(river, 0.08) // mess, opacity
+    //river bed
+    var geometry_bed = new THREE.BoxGeometry(1, 0.05, 2)
+    var bed = new THREE.Mesh(geometry_bed, material_grass)
+    bed.position.set(position_x + 0.5, position_y + 0.025, position_z + -6)
+    scene.add(bed)
 
-//river bed
-var geometry_bed = new THREE.BoxGeometry(1, 0.05, 2)
-var bed = new THREE.Mesh(geometry_bed, material_grass)
-bed.position.set(position_x + 0.5, position_y + 0.025, position_z + -6)
-scene.add(bed)
+    //grassland right
+    var geometry_right = new THREE.BoxGeometry(3.25, 0.2, 2)
+    var ground_right = new THREE.Mesh(geometry_right, material_grass)
+    ground_right.position.set(position_x + 2.625, position_y + 0.1, position_z + -6)
+    ground_right.receiveShadow = true
+    scene.add(ground_right)
+    customizeShadow(ground_right, 0.25) // mess, opacity
 
-//grassland right
-var geometry_right = new THREE.BoxGeometry(3.25, 0.2, 2)
-var ground_right = new THREE.Mesh(geometry_right, material_grass)
-ground_right.position.set(position_x + 2.625, position_y + 0.1, position_z + -6)
-ground_right.receiveShadow = true
-scene.add(ground_right)
-customizeShadow(ground_right, 0.25) // mess, opacity
+    // grassland down
+    var geometry_down = new THREE.BoxGeometry(8.5, 3, 2)
+    var ground_down = new THREE.Mesh(geometry_down, material_grass)
+    ground_down.position.set(position_x + 0, position_y + -1.5, position_z + -6)
+    // ground_down.receiveShadow = true
+    scene.add(ground_down)
+    customizeShadow(ground_down, 0.25)
 
-// grassland down
-var geometry_down = new THREE.BoxGeometry(8.5, 3, 2)
-var ground_down = new THREE.Mesh(geometry_down, material_grass)
-ground_down.position.set(position_x + 0, position_y + -1.5, position_z + -6)
-// ground_down.receiveShadow = true
-scene.add(ground_down)
-customizeShadow(ground_down, 0.25)
+    // lake
+    const geometry_lake = new THREE.BoxGeometry(2.5, 0.2, 1.5)
+
+    const mesh_lake = new THREE.Mesh(geometry_lake, material_river)
+    mesh_lake.position.set(position_x + 0.5, position_y + -2.8, position_z - 4.25)
+    mesh_lake.receiveShadow = true
+    scene.add(mesh_lake)
+    customizeShadow(mesh_lake, 0.08)
+
+    // lake bed
+    const geometry_lake_bed = new THREE.BoxGeometry(2.5, 0.1, 1.5)
+
+    const mesh_lake_bed = new THREE.Mesh(geometry_lake_bed, material_grass)
+    mesh_lake_bed.position.set(position_x + 0.5, position_y + -2.95, position_z - 4.25)
+    mesh_lake_bed.receiveShadow = true
+    scene.add(mesh_lake_bed)
+    customizeShadow(mesh_lake_bed, 0.08)
+
+    // ground
+    const geometry_ground = new THREE.BoxGeometry(2.5, 0.4, 11)
+    const mesh_ground = new THREE.Mesh(geometry_ground, material_grass)
+    mesh_ground.receiveShadow = true
+    mesh_ground.position.set(position_x + 0.5, position_y + -2.8, position_z + 2)
+    scene.add(mesh_ground)
+    customizeShadow(mesh_ground, 0.25)
+
+    // ground right
+    const geometry_ground_right = new THREE.BoxGeometry(2.5, 0.4, 12.5)
+    const mesh_ground_right = new THREE.Mesh(geometry_ground_right, material_grass)
+    mesh_ground_right.receiveShadow = true
+    mesh_ground_right.position.set(position_x + 3, position_y + -2.8, position_z + 1.25)
+    scene.add(mesh_ground_right)
+    customizeShadow(mesh_ground_right, 0.25)
+
+    // ground left
+    const geometry_ground_left = new THREE.BoxGeometry(3.5, 0.4, 12.5)
+    const mesh_groundleft = new THREE.Mesh(geometry_ground_left, material_grass)
+    mesh_groundleft.receiveShadow = true
+    mesh_groundleft.position.set(position_x - 2.5, position_y + -2.8, position_z + 1.25)
+    scene.add(mesh_groundleft)
+    customizeShadow(mesh_groundleft, 0.25)
+}
 
 // 樹物件
-var tree = function(x, z) {
+function tree(x, z) {
     this.x = x
     this.z = z
     //trunk
@@ -139,66 +202,19 @@ var tree = function(x, z) {
     customizeShadow(leaves, 0.25) // mess, opacity
     scene.add(leaves)
 }
-// 樹的位置
-// left
-tree(-1.75, -6.85)
-tree(-1.75, -6.15)
-tree(-1.5, -6.5)
-tree(-1.5, -5.6)
-tree(-1.25, -6.85)
-tree(-1.25, -5.25)
-tree(-0.75, -6.85)
-tree(-0.75, -6.25)
-tree(-0.25, -6.85)
-// right
-tree(1.25, -6.85)
-tree(1.25, -5.25)
-tree(1.5, -6.5)
-tree(1.75, -6.85)
-tree(1.75, -5.65)
 
-// lake
-const geometry_lake = new THREE.BoxGeometry(2.5, 0.2,1.5)
-
-const mesh_lake = new THREE.Mesh(geometry_lake, material_river)
-mesh_lake.position.set(position_x+0.5, position_y + -2.80, position_z-4.25)
-mesh_lake.receiveShadow = true
-scene.add(mesh_lake)
-customizeShadow(mesh_lake, 0.08)
-
-// lake bed
-const geometry_lake_bed = new THREE.BoxGeometry(2.5, 0.1,1.5)
-
-const mesh_lake_bed = new THREE.Mesh(geometry_lake_bed, material_grass)
-mesh_lake_bed.position.set(position_x + 0.5, position_y + -2.95, position_z - 4.25)
-mesh_lake_bed.receiveShadow = true
-scene.add(mesh_lake_bed)
-customizeShadow(mesh_lake_bed, 0.08)
-
-// ground
-const geometry_ground = new THREE.BoxGeometry(2.5, 0.4, 11)
-const mesh_ground = new THREE.Mesh(geometry_ground, material_grass)
-mesh_ground.receiveShadow = true
-mesh_ground.position.set(position_x + 0.5, position_y + -2.8, position_z +2)
-scene.add(mesh_ground)
-customizeShadow(mesh_ground, 0.25)
-
-// ground right
-const geometry_ground_right = new THREE.BoxGeometry(2.5, 0.4, 12.5)
-const mesh_ground_right = new THREE.Mesh(geometry_ground_right, material_grass)
-mesh_ground_right.receiveShadow = true
-mesh_ground_right.position.set(position_x+3, position_y + -2.8, position_z +1.25)
-scene.add(mesh_ground_right)
-customizeShadow(mesh_ground_right, 0.25)
-
-// ground left
-const geometry_ground_left = new THREE.BoxGeometry(3.5, 0.4, 12.5)
-const mesh_groundleft = new THREE.Mesh(geometry_ground_left, material_grass)
-mesh_groundleft.receiveShadow = true
-mesh_groundleft.position.set(position_x-2.5, position_y + -2.8, position_z +1.25)
-scene.add(mesh_groundleft)
-customizeShadow(mesh_groundleft, 0.25)
-
+function build_tree() {
+    for (let i = 1; i < 30; i++) {
+        var tree_x = 1.25 + Math.random() * 2.75
+        var tree_y = -5.25 + Math.random() * -1.6
+        tree(tree_x, tree_y)
+    }
+    for (let i = 1; i < 30; i++) {
+        var tree_x = -0.25 + Math.random() * -3.75
+        var tree_y = -5.25 + Math.random() * -1.6
+        tree(tree_x, tree_y)
+    }
+}
 // 幀數監測
 function initStats() {
     const stats = new Stats()
@@ -217,81 +233,61 @@ function customizeShadow(t, a) {
     scene.add(mesh_shadow)
 }
 
-// 橋馮氏材質設為棕色
-var material_wood = new THREE.MeshLambertMaterial({ color: Colors.brown })
+function bridge() {
+    //bridge - rail
+    var geometry_rail_v = new THREE.BoxGeometry(0.04, 0.3, 0.04)
+    // 橋馮氏材質設為棕色
+    var material_wood = new THREE.MeshLambertMaterial({ color: Colors.brown })
+    var rail_1 = new THREE.Mesh(geometry_rail_v, material_wood)
+    rail_1.position.set(position_x + -0.1, position_y + 0.35, position_z + -5.6)
+    rail_1.castShadow = true
+    customizeShadow(rail_1, 0.2)
+    scene.add(rail_1)
 
-//bridge - wood block
-for (var i = 0; i < 6; i++) {
-    var geometry_block = new THREE.BoxGeometry(0.15, 0.02, 0.4)
-    var block = new THREE.Mesh(geometry_block, material_wood)
-    block.position.set(position_x + 0 + 0.2 * i, position_y + 0.21, position_z + -5.8)
-    block.castShadow = true
-    block.receiveShadow = true
-    scene.add(block)
+    var rail_2 = new THREE.Mesh(geometry_rail_v, material_wood)
+    rail_2.position.set(position_x + 1.1, position_y + 0.35, position_z + -5.6)
+    rail_2.castShadow = true
+    customizeShadow(rail_2, 0.2)
+    scene.add(rail_2)
+
+    var rail_3 = new THREE.Mesh(geometry_rail_v, material_wood)
+    rail_3.position.set(position_x + -0.1, position_y + 0.35, position_z + -6)
+    rail_3.castShadow = true
+    customizeShadow(rail_3, 0.2)
+    scene.add(rail_3)
+
+    var rail_4 = new THREE.Mesh(geometry_rail_v, material_wood)
+    rail_4.position.set(position_x + 1.1, position_y + 0.35, position_z + -6)
+    rail_4.castShadow = true
+    customizeShadow(rail_4, 0.2)
+    scene.add(rail_4)
+
+    var geometry_rail_h = new THREE.BoxGeometry(1.2, 0.04, 0.04)
+    var rail_h1 = new THREE.Mesh(geometry_rail_h, material_wood)
+    rail_h1.position.set(position_x + 0.5, position_y + 0.42, position_z + -5.6)
+    rail_h1.castShadow = true
+    customizeShadow(rail_h1, 0.2)
+    scene.add(rail_h1)
+
+    var rail_h2 = new THREE.Mesh(geometry_rail_h, material_wood)
+    rail_h2.position.set(position_x + 0.5, position_y + 0.42, position_z + -6)
+    rail_h2.castShadow = true
+    customizeShadow(rail_h2, 0.2)
+    scene.add(rail_h2)
+    //bridge - wood block
+    for (var i = 0; i < 6; i++) {
+        var geometry_block = new THREE.BoxGeometry(0.15, 0.02, 0.4)
+        var block = new THREE.Mesh(geometry_block, material_wood)
+        block.position.set(position_x + 0 + 0.2 * i, position_y + 0.21, position_z + -5.8)
+        block.castShadow = true
+        block.receiveShadow = true
+        scene.add(block)
+    }
 }
 
-//bridge - rail
-var geometry_rail_v = new THREE.BoxGeometry(0.04, 0.3, 0.04)
-var rail_1 = new THREE.Mesh(geometry_rail_v, material_wood)
-rail_1.position.set(position_x + -0.1, position_y + 0.35, position_z + -5.6)
-rail_1.castShadow = true
-customizeShadow(rail_1, 0.2)
-scene.add(rail_1)
-
-var rail_2 = new THREE.Mesh(geometry_rail_v, material_wood)
-rail_2.position.set(position_x + 1.1, position_y + 0.35, position_z + -5.6)
-rail_2.castShadow = true
-customizeShadow(rail_2, 0.2)
-scene.add(rail_2)
-
-var rail_3 = new THREE.Mesh(geometry_rail_v, material_wood)
-rail_3.position.set(position_x + -0.1, position_y + 0.35, position_z + -6)
-rail_3.castShadow = true
-customizeShadow(rail_3, 0.2)
-scene.add(rail_3)
-
-var rail_4 = new THREE.Mesh(geometry_rail_v, material_wood)
-rail_4.position.set(position_x + 1.1, position_y + 0.35, position_z + -6)
-rail_4.castShadow = true
-customizeShadow(rail_4, 0.2)
-scene.add(rail_4)
-
-var geometry_rail_h = new THREE.BoxGeometry(1.2, 0.04, 0.04)
-var rail_h1 = new THREE.Mesh(geometry_rail_h, material_wood)
-rail_h1.position.set(position_x + 0.5, position_y + 0.42, position_z + -5.6)
-rail_h1.castShadow = true
-customizeShadow(rail_h1, 0.2)
-scene.add(rail_h1)
-
-var rail_h2 = new THREE.Mesh(geometry_rail_h, material_wood)
-rail_h2.position.set(position_x + 0.5, position_y + 0.42, position_z + -6)
-rail_h2.castShadow = true
-customizeShadow(rail_h2, 0.2)
-scene.add(rail_h2)
-
-// 三軸座標輔助
-let axes = new THREE.AxesHelper(20)
-scene.add(axes)
-
-// 建立 OrbitControls
-cameraControl = new THREE.OrbitControls(camera)
-cameraControl.enableDamping = true // 啟用阻尼效果,滑鼠拖曳靈敏度
-// 是否可縮放
-// cameraControl.enableZoom = true
-// 設計相機距離原點最近距離
-// cameraControl.minDistance = 3
-// 設計相機距離原點最遠距離
-cameraControl.maxDistance = 100
-// 開啟右鍵拖移
-cameraControl.enablePan = true
-cameraControl.dampingFactor = 0.25 // 阻尼系數
-// cameraControl.autoRotate = true // 啟用自動旋轉
-
-var drops = []
-
-// 瀑布
-var Drop = function() {
+function Drop() {
     this.geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1)
+    var material_river = new THREE.MeshLambertMaterial({ color: Colors.blue })
     this.drop = new THREE.Mesh(this.geometry, material_river)
     this.drop.position.set(
         position_x + Math.random(0.1, 0.9),
@@ -310,13 +306,7 @@ var Drop = function() {
         this.drop.position.y -= this.speed
     }
 }
-
-var count = 0
-var render = function() {
-    pointLightAnimation()
-    cameraControl.update()
-    stats.update()
-    // 瀑布數量
+function build_drop() {
     if (count % 3 == 0) {
         for (var i = 0; i < 25; i++) {
             drops.push(new Drop())
@@ -330,7 +320,20 @@ var render = function() {
             drops.splice(i, 1)
         }
     }
-    requestAnimationFrame(render)
+}
+function loop() {
+    render()
+    requestAnimationFrame(loop)
+}
+
+function render() {
+    pointLightAnimation()
+    if (cameraControl) cameraControl.update()
+    stats.update()
+    // build_drop()
     renderer.render(scene, camera)
 }
-render()
+ground()
+bridge()
+build_tree()
+loop()
