@@ -25,6 +25,7 @@ var aspectRatio = w / h,
     farPlane = 1000
 var camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane)
 var renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true })
+
 renderer.setSize(w, h)
 renderer.shadowMapEnabled = true
 // 設定陰影貼圖種類
@@ -50,7 +51,7 @@ cameraControl.enableDamping = true // 啟用阻尼效果,滑鼠拖曳靈敏度
 // 設計相機距離原點最近距離
 // cameraControl.minDistance = 3
 // 設計相機距離原點最遠距離
-cameraControl.maxDistance = 100
+cameraControl.maxDistance = 2
 // 開啟右鍵拖移
 cameraControl.enablePan = true
 cameraControl.dampingFactor = 0.25 // 阻尼系數
@@ -86,6 +87,7 @@ function pointLightAnimation() {
     // 點光源位置與sun同步
     pointLight.position.copy(sun_mesh.position)
 }
+
 function ground() {
     // grassland left
     var geometry_left = new THREE.BoxGeometry(4.25, 0.2, 2)
@@ -168,6 +170,98 @@ function ground() {
     mesh_groundleft.position.set(position_x - 2.5, position_y + -2.8, position_z + 1.25)
     scene.add(mesh_groundleft)
     customizeShadow(mesh_groundleft, 0.25)
+}
+
+Cow = function() {
+    this.threegroup = new THREE.Group()
+
+    var body = new THREE.BoxGeometry(0.1, 0.1, 0.1)
+    var face = new THREE.BoxGeometry(0.1, 0.1, 0.1)
+    var spot = new THREE.BoxGeometry(0.05, 0.05, 0.05)
+    var b_eyes = new THREE.BoxGeometry(0.01, 0.01, 0.01)
+    var tail = new THREE.BoxGeometry(0.03, 0.01, 0.01)
+    var leg = new THREE.BoxGeometry(0.03, 0.05, 0.03)
+    this.whiteMat = new THREE.MeshLambertMaterial({
+        color: 0xffffff,
+    })
+    this.pinkMat = new THREE.MeshLambertMaterial({
+        color: 0xfaa288,
+    })
+    this.blackMat = new THREE.MeshLambertMaterial({
+        color: 0x000000,
+    })
+
+    // Body
+    this.body_Mesh = new THREE.Mesh(body, this.whiteMat)
+    this.body_Mesh.position.set(position_x, position_y - 2, position_z)
+    this.body_Mesh.castShadow = true
+
+    // Face
+    this.face_Mesh = new THREE.Mesh(face, this.pinkMat)
+    this.face_Mesh.position.set(position_x + 0.1, position_y - 2, position_z)
+    this.face_Mesh.castShadow = true
+
+    // Eyes
+    this.eye_Mesh = new THREE.Mesh(spot, this.whiteMat)
+    this.eye_Mesh.scale.set(1, 1, 0.5)
+    this.eye_Mesh.position.set(position_x + 0.1, position_y - 1.973, position_z + 0.04)
+    this.eye_Mesh.castShadow = true
+    this.rightEye = this.eye_Mesh.clone()
+    this.rightEye.position.z = position_z - 0.04
+
+    // Black eyes
+    this.b_eye_Mesh = new THREE.Mesh(b_eyes, this.blackMat)
+    this.b_eye_Mesh.scale.set(1, 1, 0.5)
+    this.b_eye_Mesh.position.set(position_x + 0.1, position_y - 1.973, position_z + 0.055)
+    this.b_eye_Mesh.castShadow = true
+    this.r_b_eye_Mesh = this.b_eye_Mesh.clone()
+    this.r_b_eye_Mesh.position.z = position_z - 0.055
+
+    // SPOTS
+    this.spot1 = new THREE.Mesh(spot, this.blackMat)
+    this.spot1.position.set(position_x, position_y - 1.974, position_z - 0.026)
+    this.spot2 = new THREE.Mesh(spot, this.blackMat)
+    this.spot2.scale.set(0.5, 0.5, 0.5)
+    this.spot2.position.set(position_x - 0.04, position_y - 2.02, position_z - 0.026)
+    this.spot3 = new THREE.Mesh(spot, this.blackMat)
+    this.spot3.scale.set(0.75, 0.75, 0.75)
+    this.spot3.position.set(position_x, position_y - 2.032, position_z + 0.033)
+
+    // tail
+    this.tail_mesh = new THREE.Mesh(tail, this.whiteMat)
+    this.tail_mesh.position.set(position_x - 0.068, position_y - 1.97, position_z + 0.01)
+
+    // LEGS
+    this.leg1 = new THREE.Mesh(leg, this.pinkMat)
+    this.leg1.position.set(position_x - 0.035, position_y - 2.06, position_z + 0.02)
+    this.leg2 = this.leg1.clone()
+    this.leg2.position.x = position_x + 0.06
+    this.leg3 = this.leg1.clone()
+    this.leg3.position.z = position_z - 0.02
+    this.leg4 = this.leg3.clone()
+    this.leg4.position.x = position_x + 0.06
+
+    this.threegroup.add(this.body_Mesh)
+    this.threegroup.add(this.face_Mesh)
+    this.threegroup.add(this.eye_Mesh)
+    this.threegroup.add(this.rightEye)
+    this.threegroup.add(this.b_eye_Mesh)
+    this.threegroup.add(this.r_b_eye_Mesh)
+    this.threegroup.add(this.spot1)
+    this.threegroup.add(this.spot2)
+    this.threegroup.add(this.spot3)
+    this.threegroup.add(this.tail_mesh)
+    this.threegroup.add(this.tail_mesh)
+    this.threegroup.add(this.leg1)
+    this.threegroup.add(this.leg2)
+    this.threegroup.add(this.leg3)
+    this.threegroup.add(this.leg4)
+}
+
+function createCows() {
+    cow = new Cow()
+    cow.threegroup.position.set(position_x, position_y - 3.5, position_z + 0.033)
+    scene.add(cow.threegroup)
 }
 
 // 樹物件
@@ -306,6 +400,7 @@ function Drop() {
         this.drop.position.y -= this.speed
     }
 }
+
 function build_drop() {
     if (count % 3 == 0) {
         for (var i = 0; i < 25; i++) {
@@ -321,8 +416,18 @@ function build_drop() {
         }
     }
 }
+var angleLegs = 0
 function loop() {
+    angleLegs += 0.2
+    var sin = Math.sin(angleLegs)
+    var cos = Math.cos(angleLegs)
     render()
+    cow.threegroup.position.y = cos * -0.02
+    cow.tail_mesh.rotation.z = (sin * Math.PI) / 3
+    cow.leg1.position.x = -0.025 + cos * 0.01
+    cow.leg2.position.x = 0.025 + sin * 0.01
+    cow.leg3.position.x = -0.025 + sin * 0.01
+    cow.leg4.position.x = 0.025 + cos * 0.01
     requestAnimationFrame(loop)
 }
 
@@ -333,7 +438,9 @@ function render() {
     // build_drop()
     renderer.render(scene, camera)
 }
-ground()
+
+// ground()
+createCows()
 bridge()
 build_tree()
 loop()
