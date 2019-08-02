@@ -40,8 +40,8 @@ camera.position.set(-5, 6, 8)
 camera.lookAt(new THREE.Vector3(0, 0, 0))
 
 // 三軸座標輔助
-let axes = new THREE.AxesHelper(20)
-scene.add(axes)
+// let axes = new THREE.AxesHelper(20)
+// scene.add(axes)
 
 // 建立 OrbitControls
 cameraControl = new THREE.OrbitControls(camera, renderer.domElement)
@@ -51,7 +51,7 @@ cameraControl.enableDamping = true // 啟用阻尼效果,滑鼠拖曳靈敏度
 // 設計相機距離原點最近距離
 // cameraControl.minDistance = 3
 // 設計相機距離原點最遠距離
-cameraControl.maxDistance = 2
+cameraControl.maxDistance = 100
 // 開啟右鍵拖移
 cameraControl.enablePan = true
 cameraControl.dampingFactor = 0.25 // 阻尼系數
@@ -190,7 +190,9 @@ Cow = function() {
     this.blackMat = new THREE.MeshLambertMaterial({
         color: 0x000000,
     })
-
+    this.greyMat = new THREE.MeshLambertMaterial({
+        color: 0x999999,
+    })
     // Body
     this.body_Mesh = new THREE.Mesh(body, this.whiteMat)
     this.body_Mesh.position.set(position_x, position_y - 2, position_z)
@@ -241,6 +243,38 @@ Cow = function() {
     this.leg4 = this.leg3.clone()
     this.leg4.position.x = position_x + 0.06
 
+    // horn
+    this.rightHorn = new THREE.Mesh(spot, this.greyMat)
+    this.rightHorn.position.set(position_x + 0.065, position_y - 1.94, position_z + 0.025)
+    this.rightHorn.scale.set(0.4, 0.4, 0.4)
+    this.leftHorn = this.rightHorn.clone()
+    this.leftHorn.position.z = position_z - 0.025
+
+    // NOSTRILS
+    this.rightnostril1 = new THREE.Mesh(spot, this.blackMat)
+    this.rightnostril1.position.set(position_x + 0.145, position_y - 1.965, position_z + 0.035)
+    this.rightnostril1.scale.set(0.4, 0.4, 0.4)
+    this.leftnostril1 = this.rightnostril1.clone()
+    this.leftnostril1.position.z = position_z - 0.035
+
+    // EARS
+    this.leftEar = new THREE.Mesh(spot, this.pinkMat)
+    this.leftEar.position.set(position_x + 0.05, position_y - 1.99, position_z + 0.065)
+    this.leftEar.scale.set(0.4, 0.8, 0.4)
+    this.rightEar = this.leftEar.clone()
+    this.rightEar.position.z = position_z - 0.065
+
+    // MOUTH
+    this.mouth = new THREE.Mesh(spot, this.blackMat)
+    this.mouth.position.set(position_x + 0.145, position_y - 2.025, position_z)
+    this.mouth.scale.set(0.6, 0.6, 0.6)
+    this.mouth2 = new THREE.Mesh(spot, this.pinkMat)
+    this.mouth2.position.set(position_x + 0.13, position_y - 2.04, position_z)
+    this.mouth2.scale.set(0.8, 0.8, 0.8)
+    this.mouthgroup = new THREE.Group()
+    this.mouthgroup.add(this.mouth)
+    this.mouthgroup.add(this.mouth2)
+
     this.threegroup.add(this.body_Mesh)
     this.threegroup.add(this.face_Mesh)
     this.threegroup.add(this.eye_Mesh)
@@ -256,12 +290,31 @@ Cow = function() {
     this.threegroup.add(this.leg2)
     this.threegroup.add(this.leg3)
     this.threegroup.add(this.leg4)
+    this.threegroup.add(this.rightHorn)
+    this.threegroup.add(this.leftHorn)
+    this.threegroup.add(this.rightnostril1)
+    this.threegroup.add(this.leftnostril1)
+    this.threegroup.add(this.leftEar)
+    this.threegroup.add(this.rightEar)
+    this.threegroup.add(this.mouthgroup)
 }
 
-function createCows() {
+function createCows(x, z, r) {
+    this.x = x
+    this.z = z
     cow = new Cow()
-    cow.threegroup.position.set(position_x, position_y - 3.5, position_z + 0.033)
+    cow.threegroup.position.set(position_x + this.x, position_y - 3.5, position_z + this.z)
+    cow.threegroup.rotateY(Math.PI / r)
     scene.add(cow.threegroup)
+}
+
+function build_Cows() {
+    for (let i = 1; i < 10; i++) {
+        var cow_x = -4 + Math.random() * 8
+        var cow_z = -3 + Math.random() * 10
+        var cow_r = -3 + Math.random() * 6
+        createCows(cow_x, cow_z, cow_r)
+    }
 }
 
 // 樹物件
@@ -421,14 +474,20 @@ function loop() {
     angleLegs += 0.2
     var sin = Math.sin(angleLegs)
     var cos = Math.cos(angleLegs)
-    render()
-    cow.threegroup.position.y = cos * -0.02
+
+    cow.threegroup.position.y = -0.5 + +cos * -0.02
     cow.tail_mesh.rotation.z = (sin * Math.PI) / 3
     cow.leg1.position.x = -0.025 + cos * 0.01
     cow.leg2.position.x = 0.025 + sin * 0.01
     cow.leg3.position.x = -0.025 + sin * 0.01
     cow.leg4.position.x = 0.025 + cos * 0.01
+    cow.leftEar.rotation.x = (10 + sin * Math.PI) / 4.5
+    cow.rightEar.rotation.x = (10 + sin * Math.PI) / -4.5
+    cow.mouth.position.y = 0.97 + sin * 0.01
+    cow.mouth.scale.set(0.6, 0.25 + Math.abs(cos) * 0.25, 0.6)
+
     requestAnimationFrame(loop)
+    render()
 }
 
 function render() {
@@ -439,8 +498,8 @@ function render() {
     renderer.render(scene, camera)
 }
 
-// ground()
-createCows()
+ground()
+build_Cows()
 bridge()
 build_tree()
 loop()
